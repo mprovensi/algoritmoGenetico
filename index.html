@@ -1,0 +1,515 @@
+<!--Developer Caique Sousa-->
+<!DOCTYPE html>
+<html lang="pt-br">
+	<head>
+		<meta charset="UTF-8">
+		<title>Simulação AG </title>
+		<style type="text/css">
+			.button {
+				border: 0;
+				background: transparent;
+				box-sizing: border-box;
+				width: 0;
+				height: 74px;
+
+				border-color: transparent transparent transparent #202020;
+				transition: 100ms all ease;
+				cursor: pointer;
+
+				border-style: solid;
+				border-width: 37px 0 37px 60px;
+
+				outline: 0;
+			}
+			.button.paused {
+				border-style: double;
+				border-width: 0px 0 0px 60px;
+			}
+			.button:hover {
+				border-color: transparent transparent transparent #404040;
+			}
+		</style>
+	</head>
+	<body>
+		<div style="text-align: center; font-size: 45px; font-weight: bolder; font-family: Arial"> SIMULAÇÃO AG </div>
+		<div style="margin-top: 30px;  position:fixed; right:20px; background-color: #9e9e9e36; padding: 30px; border-radius: 10px;">
+			<div style="text-align: center; margin-bottom: 14px; margin-left: 10px; height: 80px;"><button id="btn" class='button'></button></div>
+			<div id="geracao" style="text-align: center; font-size: 15px; font-weight: bolder; font-family: Arial;"> GERAÇÃO NÚMERO </div>
+			<div id="individuos" style="text-align: left; font-size: 15px; font-weight: bolder; font-family: Arial; margin-top: 20px;"> Número de indivíduos </div>
+		</div>
+		
+		<script type="text/javascript">
+		
+			var play						= false;
+			
+			var individuoCss 				= "font-family: Arial; font-weight: bold; position: fixed; background-color: rgb(255, 255, 255); border-radius: 50%; box-shadow: 1px 1px 5px #708090; width: 30px; height: 30px; text-align: center; line-height: 31px;"
+		
+			var vetorIndividuos 			= [];
+			var vetorFatoresNaturais  		= [];
+			
+			var numeroIndividuosTotal	 	= 10;
+
+			var numeroIndividuosIniciais 	= Math.ceil(numeroIndividuosTotal/2);
+			
+			var numeroIndividuosCrossover 	= Math.floor(numeroIndividuosTotal/2);
+			
+			var numeroFatoresNaturais 		= 25;
+			
+			
+			var porcentagemMutacao			= 15;
+			var porcentagemCrossover		= 5;
+			var tamanhoCromossomos			= 10;
+			var maiorResultado				= 0;
+			
+			var rodadasGeracao				= 25;
+			
+			var taxaGanho					= 50;
+
+			var forcaInicial				= 10;
+			
+			var maximoFilhos				= 3;
+			
+			var telaX  						= 800;
+			var telaY  						= 600;
+			
+			
+			//Chama função para preencher os cromossomos iniciais
+			preencheIndividuos();
+			
+
+			//Preenche os cromossomos iniciais
+			function preencheIndividuos(){
+
+				var individuo;
+				var vetorMovimentos = [];
+				var i,j;
+				
+				//insere individuos
+				for(i=0; i< numeroIndividuosIniciais; i++){
+					for(j=0; j < tamanhoCromossomos; j++){
+						vetorMovimentos.push(gerarAleatorio(9, 0));
+					}
+					individuo = new Object();
+					individuo.id				= 	i+1;
+					individuo.movimentos      	= 	vetorMovimentos;
+					individuo.pontuacao 		= 	0;
+					individuo.x					=   Math.floor(Math.random()*800);
+					individuo.y					=   Math.floor(Math.random()*600);
+					individuo.forca				=   forcaInicial;				
+					individuo.tamanho			=   30;		
+					individuo.mutacao			=   0;							
+					individuo.sexo				=   1;	
+
+					var div;
+					div = document.createElement("div");
+					div.id = "individuo"+individuo.id;
+					div.style.cssText = individuoCss;
+					//document.getElementById("tela").appendChild(div);
+					document.body.appendChild(div);
+					
+					vetorIndividuos.push(individuo);
+					vetorMovimentos  = [];
+				}
+				
+				//insere individuos p/ crossover
+				for(i = numeroIndividuosIniciais; i < numeroIndividuosIniciais + numeroIndividuosCrossover; i++){
+					for(j=0; j < tamanhoCromossomos; j++){
+						vetorMovimentos.push(gerarAleatorio(9, 0));
+					}
+					individuo = new Object();
+					individuo.id			 	= 	i+1;
+					individuo.movimentos		=  vetorMovimentos;
+					individuo.pontuacao 		= 	0;
+					individuo.x					=   Math.floor(Math.random()*800);
+					individuo.y					=   Math.floor(Math.random()*600);
+					individuo.forca				=   forcaInicial;
+					individuo.tamanho			=   30;
+					individuo.mutacao			=   0;
+					individuo.sexo				=   0;	
+					
+					var div;
+					div = document.createElement("div");
+					div.id = "individuo"+individuo.id;
+					div.style.cssText = individuoCss;
+					//document.getElementById("tela").appendChild(div);
+					document.body.appendChild(div);
+					
+					vetorIndividuos.push(individuo); 
+					vetorMovimentos = [];
+				}
+				
+				//insere perigos da natureza
+				for(i = 0; i < numeroFatoresNaturais; i++){
+					for(j=0; j < tamanhoCromossomos; j++){
+						vetorMovimentos.push(gerarAleatorio(9, 0));
+					}
+					individuo = new Object();
+					individuo.id				= 	(i+1) + "fatorNatural";
+					individuo.movimentos      	= 	vetorMovimentos;
+					individuo.pontuacao 		= 	0;
+					individuo.x					=   Math.floor(Math.random()*800);
+					individuo.y					=   Math.floor(Math.random()*600);
+					individuo.forca				=   forcaInicial;				
+					individuo.tamanho			=   30;		
+					individuo.perigo 			=  	true;					
+					
+					var div;
+					div = document.createElement("div");
+					div.id = "individuo"+individuo.id;
+					div.style.cssText = "position: fixed; background-color: red; border-radius: 50%; box-shadow: 1px 1px 5px #708090; width: 30px; height: 30px;"
+					document.body.appendChild(div);
+					
+					vetorFatoresNaturais.push(individuo);
+					vetorMovimentos  = [];
+				}
+			}
+			
+			async function mexerTodos(){
+				let i = 0;
+				while( i < vetorIndividuos.length ){
+					//console.log('Pontuacao do individuo ' + vetorIndividuos[i].id + ': ' + vetorIndividuos[i].forca);
+					mexer(vetorIndividuos[i]);
+					i++;
+				}
+				await sleep(250);
+			}
+			
+			function mexer(individuo){
+
+				var individuoDiv = document.getElementById("individuo"+individuo.id);
+				
+				if(individuo.morreu){
+					individuoDiv.innerHTML = "X";
+					individuoDiv.style.backgroundColor= "white";
+					return;
+				}
+				if(individuo.sexo != undefined){
+					individuoDiv.innerHTML = individuo.sexo;
+				}   
+				
+				var lado=Math.floor(Math.random()*8); //1-norte 2-nordeste 3-leste 4-sudeste 5-sul 6-sudoeste 7-oeste 8-noroeste
+
+				  //switch lado pra movimentar a individuo.
+				  switch(lado+1){
+					  case 1:
+						  individuo.y-=10;
+						  individuo.x+=0;
+						  break;
+					  case 2:
+						  individuo.y-=5;
+						  individuo.x+=5;
+
+						  break;
+					  case 3:
+						  individuo.y+=0;
+						  individuo.x+=10;
+						  break;
+					  case 4:
+						  individuo.y+=5;
+						  individuo.x+=5;
+						  break;
+					  case 5:
+						  individuo.y+=10;
+						  individuo.x+=0;
+						  break;
+					  case 6:
+						  individuo.y+=5;
+						  individuo.x-=5;
+						  break;
+					  case 7:
+						  individuo.y+=0;
+						  individuo.x-=10;
+						  break;
+					  case 8:
+						  individuo.y-=5;
+						  individuo.x-=5;
+						  break;
+
+					   }
+				if(individuo.y < 0){
+					individuo.y = 0;
+				}
+				if(individuo.y >= 600){
+					individuo.y = 600;
+				}
+				if(individuo.x < 0){
+					individuo.x = 0;
+				}
+				if(individuo.x >= 800){
+					individuo.x = 800;
+				}
+				
+				
+				individuoDiv.style.top= individuo.y+"px";
+				individuoDiv.style.left= individuo.x+"px";
+					
+					
+				if (!individuo.perigo){	
+					verificaColisao(individuo);
+					//Muda cor conforme ganha forca
+					
+					
+					
+					let totalCromossomo = individuo.movimentos.reduce(function(acumulador, valorAtual) {
+					   return acumulador + valorAtual;
+					 }, 0);
+					 
+					var cor = Math.floor((individuo.forca + totalCromossomo)/3);
+					
+					individuoDiv.style.backgroundColor= "rgb("+ (255-cor) +", "+ (255-cor) +", "+ (255-cor) +")";
+					//Aumenta tamanho conforme ganha forca
+					//individuoDiv.style.width= (individuo.tamanho+individuo.forca)+'px';
+					//individuoDiv.style.height= (individuo.tamanho+individuo.forca)+'px';
+				}
+			}
+			
+			//Verifica se houve colisão entre um indivíduo e um perigo da natureza
+			function verificaColisao(individuo){
+				let i = 0;
+				if(!individuo.perigo){
+					while( i < vetorFatoresNaturais.length ){
+						var pos = getPositions(individuo);
+						var pos2 = getPositions(vetorFatoresNaturais[i]);
+						var horizontalMatch = comparePositions(pos[0], pos2[0]);
+						var verticalMatch = comparePositions(pos[1], pos2[1]);
+						var match = horizontalMatch && verticalMatch;
+						if(match){
+							const caracteristica = Math.floor(Math.random() * tamanhoCromossomos); 
+							if(individuo.movimentos[caracteristica] >= vetorFatoresNaturais[i].movimentos[caracteristica]){
+								individuo.forca+= taxaGanho;
+								individuo.pontuacao+= taxaGanho;
+								
+								if(individuo.forca>100){
+									individuo.forca=100;
+								}
+							} else {
+								individuo.forca-= taxaGanho;
+								if(individuo.forca <= 0){
+									individuo.pontuacao = 0;
+									individuo.forca = 0;
+									individuo.morreu = true;
+								} else {
+									individuo.forca-= taxaGanho;
+									individuo.pontuacao-= taxaGanho;
+								}
+							}
+							
+						}
+						i++;
+					}
+				}
+			}
+			
+			function getPositions(individuo) {
+			  return [
+				[individuo.x, individuo.x + individuo.tamanho],
+				[individuo.y, individuo.y + individuo.tamanho]
+			  ];
+			}
+
+			function comparePositions(p1, p2) {
+			  var x1 = p1[0] < p2[0] ? p1 : p2;
+			  var x2 = p1[0] < p2[0] ? p2 : p1;
+			  return x1[1] > x2[0] || x1[0] === x2[0] ? true : false;
+			}
+
+			//Faz crossover dos cromossomos
+			async function crossover(){
+				var i = numeroIndividuosIniciais;
+				for(i; i < numeroIndividuosIniciais + numeroIndividuosCrossover; i++){
+					if(Math.random() >= 0.5){
+						vetorIndividuos[i]['movimentos'] = vetorIndividuos[i-numeroIndividuosCrossover]['movimentos'].slice(0,tamanhoCromossomos/2); 
+						vetorIndividuos[i]['movimentos'] = vetorIndividuos[i]['movimentos'].concat(vetorIndividuos[i-(numeroIndividuosCrossover-1)] ['movimentos'].slice((tamanhoCromossomos/2) -1, tamanhoCromossomos));
+					}else{
+						vetorIndividuos[i]['movimentos'] = vetorIndividuos[i-(numeroIndividuosCrossover-1)]['movimentos'].slice(0,tamanhoCromossomos/2); 
+						vetorIndividuos[i]['movimentos'] = vetorIndividuos[i]['movimentos'].concat(vetorIndividuos[i-numeroIndividuosCrossover] ['movimentos'].slice((tamanhoCromossomos/2) -1, tamanhoCromossomos));
+					}
+				}
+			}
+			
+			//Faz reprodução dos indivíduos
+			async function reproduzir(){
+
+				var i = 0;
+				var total = vetorIndividuos.length;
+				var novoVetorIndividuos=[];
+				
+				if(total < 2){
+					return;
+				}
+				
+				for(i; i < total; i++){
+								
+					var divRemove = document.getElementById("individuo"+vetorIndividuos[i]['id']);
+					divRemove.remove();
+					
+					if(!vetorIndividuos[i].morreu){
+					
+						var parceiro = procurarParceiro(vetorIndividuos[i]);
+						
+						var filhos = gerarAleatorio(maximoFilhos, 0);
+
+						for(var j = 0; j < filhos; j++){
+							var novoIndividuo = {...(vetorIndividuos[i])};
+							novoIndividuo.id = vetorIndividuos[i].id + "." + j;
+							novoIndividuo.sexo = gerarAleatorio(1, 0);
+							novoIndividuo.forca = forcaInicial;
+							novoIndividuo.pontuacao = 0;
+							novoIndividuo['movimentos'] = vetorIndividuos[i]['movimentos'].slice(0,tamanhoCromossomos/2); 
+							novoIndividuo['movimentos'] = vetorIndividuos[i]['movimentos'].concat(vetorIndividuos[parceiro] ['movimentos'].slice((tamanhoCromossomos/2) -1, tamanhoCromossomos));
+							
+							novoVetorIndividuos.push(novoIndividuo);
+
+							if(novoIndividuo.sexo === 1){
+								numeroIndividuosIniciais++;
+							} else {
+								numeroIndividuosCrossover++;
+							}
+
+
+							var novoIndividuoDiv;
+							novoIndividuoDiv = document.createElement("div");
+							novoIndividuoDiv.id = "individuo"+novoIndividuo.id;
+							novoIndividuoDiv.style.cssText = individuoCss;
+							novoIndividuoDiv.style.top= novoIndividuo.y+"px";
+							novoIndividuoDiv.style.left= novoIndividuo.x+"px";
+							document.body.appendChild(novoIndividuoDiv);
+						}	
+					
+					}
+					
+					if(vetorIndividuos[i].sexo === 1){
+						numeroIndividuosIniciais--;
+					} else {
+						numeroIndividuosCrossover--;
+					}
+
+					vetorIndividuos[i].morreu = true;
+				}
+				
+				vetorIndividuos = novoVetorIndividuos;
+			}
+			
+			function procurarParceiro(individuo){
+				while(true){
+					var parceiro = gerarAleatorio(vetorIndividuos.length-1, 0);
+					if(vetorIndividuos[parceiro].id != individuo.id && vetorIndividuos[parceiro].sexo != individuo.sexo){
+						return parceiro;
+					}
+				}	
+			}
+			
+			//Faz mutação para alterar cromossomos
+			async function fazerMutacao(){
+				console.log('-------------------------');
+				console.log('---------MUTAÇÃO---------');
+				console.log('-------------------------');
+				var cromossomoBase = gerarAleatorio(numeroIndividuosCrossover+numeroIndividuosIniciais-1,0);//Math.floor(Math.random() * (9 - 0 + 1)) + 0;
+				var vetorMovimentos = [];
+				for(j=0; j < tamanhoCromossomos; j++){
+					vetorMovimentos.push(gerarAleatorio(9, 0));
+				}
+
+				vetorIndividuos[cromossomoBase]['movimentos'] = vetorMovimentos;
+				vetorIndividuos[cromossomoBase].mutacao++;
+			}
+
+			//Gerar numero aleatorio
+			function gerarAleatorio(max, min){
+				return Math.floor(Math.random() * (max -min + 1)) + min;
+			}
+
+			//Ordena os cromossomos por pontuacao para ver o Fitness
+			async function ordenarPorPontuacao(){
+
+				vetorIndividuos.sort(function(a, b){
+						return b.pontuacao - a.pontuacao;
+					}
+				);
+
+				i=0;
+
+				/*var ordenacao = "";
+				for(i;i < vetorIndividuos.length;	i++){
+					if(!vetorIndividuos[i].perigo){
+						ordenacao += 'Individuo ' + vetorIndividuos[i].id + ': ' + (vetorIndividuos[i].morreu ? 'morreu' : "evolução: "+ vetorIndividuos[i].pontuacao+ "%") + ", mutações: "+ vetorIndividuos[i].mutacao + "<br/>";
+					}
+				}
+				document.getElementById('individuos').innerHTML = ordenacao;*/
+				
+				document.getElementById('individuos').innerHTML = 'Número de indivíduos: ' + vetorIndividuos.length;
+				
+			}
+
+			//Determina a velocidade que o indivíduo irá se mover
+			function sleep(ms) {
+			  return new Promise(resolve => setTimeout(resolve, ms));
+			}
+
+			//Funcao a ser chamada para iniciar o algoritmo
+			async function iniciar(){
+				//constroiTela();
+
+				var i = 0;
+				
+				//faz o algoritmo rodar por tempo indeterminado
+				while(true){
+				
+					if(!play){
+						return;
+					}
+					for(const item of vetorIndividuos){
+						await mexer(item);
+
+						if(item.pontuacao >= 100){
+							//return;
+						}
+					}
+					
+					for(const item of vetorFatoresNaturais){
+						await mexer(item);
+					}
+					
+					if( i%rodadasGeracao === 0 && i/rodadasGeracao > 0){
+						document.getElementById('geracao').innerHTML = 'GERAÇÃO NÚMERO: ' + i/rodadasGeracao;
+						await(ordenarPorPontuacao());
+						
+						if(Math.random() <= (porcentagemCrossover/100)){
+							// await(crossover());
+						}
+						
+						if(Math.random() <= (porcentagemMutacao/100)){
+							await(fazerMutacao());
+						}
+						
+						await(reproduzir());
+						
+					}
+					
+					++i;
+					
+					await sleep(100);
+				}		
+			}
+			
+			
+			//Ao carregar a tela
+			window.onload = function() {
+				var btn = document.getElementById('btn');
+			  
+				btn.addEventListener("click", function(){
+					btn.classList.toggle("paused");
+
+					play = !play;
+;					if(play){
+						iniciar();
+					}
+					
+					return false;
+				});
+
+			};
+		</script>
+
+	</body>
+</html>	
